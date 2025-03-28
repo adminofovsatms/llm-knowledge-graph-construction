@@ -11,7 +11,7 @@ from langchain_community.graphs.graph_document import Node, Relationship
 from dotenv import load_dotenv
 load_dotenv()
 
-DOCS_PATH = "llm-knowledge-graph/data/course/pdfs"
+DOCS_PATH = "llm-knowledge-graph/data/course/pdf2"
 
 llm = ChatOpenAI(
     openai_api_key=os.getenv('OPENAI_API_KEY'), 
@@ -31,7 +31,10 @@ graph = Neo4jGraph(
 
 doc_transformer = LLMGraphTransformer(
     llm=llm,
-    )
+    allowed_nodes=["Technology", "Concept", "Skill", "Event", "Person", "Object"],
+    allowed_relationships=["USES", "HAS", "IS", "AT", "KNOWS"],
+    node_properties=["name", "description"],
+)
 
 # Load and split the documents
 loader = DirectoryLoader(DOCS_PATH, glob="**/*.pdf", loader_cls=PyPDFLoader)
@@ -48,7 +51,7 @@ chunks = text_splitter.split_documents(docs)
 for chunk in chunks:
 
     filename = os.path.basename(chunk.metadata["source"])
-    chunk_id = f"{filename}.{chunk.metadata["page"]}"
+    chunk_id = f"{filename}.{chunk.metadata['page']}"
     print("Processing -", chunk_id)
 
     # Embed the chunk
