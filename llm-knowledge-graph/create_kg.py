@@ -1,102 +1,98 @@
 import os
-
-from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+import json
+from langchain.docstore.document import Document
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_neo4j import Neo4jGraph
-from langchain_openai import ChatOpenAI
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_community.graphs.graph_document import Node, Relationship
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# Update the path to match your actual directory structure
-DOCS_PATH = "data/course/health-pdf"  # or use absolute path if needed
-# Alternatively, use os.path.join for better compatibility
-# DOCS_PATH = os.path.join(os.path.dirname(__file__), "data", "course", "pdf2")
+# === PATHS ===
+JSON_DIR = "data/course/json-outputs"
 
+# === OpenAI Models ===
 llm = ChatOpenAI(
-    openai_api_key=os.getenv('OPENAI_API_KEY'), 
-    model_name="gpt-3.5-turbo"
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
+    model_name="gpt-4o"
 )
 
 embedding_provider = OpenAIEmbeddings(
-    openai_api_key=os.getenv('OPENAI_API_KEY'),
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
     model="text-embedding-ada-002"
-    )
-
-graph = Neo4jGraph(
-    url=os.getenv('NEO4J_URI'),
-    username=os.getenv('NEO4J_USERNAME'),
-    password=os.getenv('NEO4J_PASSWORD')
 )
 
+# === Neo4j Connection ===
+graph = Neo4jGraph(
+    url=os.getenv("NEO4J_URI"),
+    username=os.getenv("NEO4J_USERNAME"),
+    password=os.getenv("NEO4J_PASSWORD")
+)
+
+# === Clear Existing Graph ===
+print("🧹 Clearing existing graph...")
+graph.query("MATCH (n) DETACH DELETE n")
+print("✅ Graph cleared.")
+
+# === LLM Transformer Configuration ===
 doc_transformer = LLMGraphTransformer(
     llm=llm,
     allowed_nodes=[
-        "Person", 
-        "Injury", 
-        "BodyRegion", 
-        "Treatment", 
-        "Investigation", 
-        "Event", 
-        "Location", 
-        "MedicalProfessional", 
-        "TimePoint"
+        "Person", "Injury", "BodyRegion", "Treatment", "Investigation",
+        "Event", "Location", "MedicalProfessional", "TimePoint"
     ],
     allowed_relationships=[
-        "SUFFERED", 
-        "LOCATED_IN", 
-        "WAS_TREATED_WITH", 
-        "WAS_INVESTIGATED_WITH", 
-        "WAS_ASSESSED_BY", 
-        "OCCURRED_AT", 
-        "HAS_TIMELINE", 
-        "LED_TO", 
-        "ADMINISTERED_BY"
+        "SUFFERED", "LOCATED_IN", "WAS_TREATED_WITH", "WAS_INVESTIGATED_WITH",
+        "WAS_ASSESSED_BY", "OCCURRED_AT", "HAS_TIMELINE", "LED_TO", "ADMINISTERED_BY"
     ],
     node_properties=[
-        "name", 
-        "description", 
-        "date", 
-        "specialty", 
-        "severity", 
-        "type",
-        "location",
-        "result"
-    ],
+        "name", "description", "date", "specialty", "severity",
+        "type", "location", "result"
+    ]
 )
 
-# Load and split the documents
-loader = DirectoryLoader(DOCS_PATH, glob="**/*.pdf", loader_cls=PyPDFLoader)
+# === Load JSON files as LangChain Documents ===
+docs = []
 
+for file in os.listdir(JSON_DIR):
+    if file.endswith(".json"):
+        full_path = os.path.join(JSON_DIR, file)
+        with open(full_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            raw_text = json.dumps(data, indent=2)  # keep full structure
+            docs.append(Document(page_content=raw_text, metadata={"source": file}))
+
+print(f"📄 Loaded {len(docs)} JSON documents.")
+
+# === Split into chunks ===
 text_splitter = CharacterTextSplitter(
     separator="\n\n",
     chunk_size=1500,
     chunk_overlap=200,
 )
 
-docs = loader.load()
 chunks = text_splitter.split_documents(docs)
 
+# === Process Each Chunk ===
 for chunk in chunks:
+    filename = chunk.metadata["source"]
+    chunk_id = f"{filename}.0"
 
-    filename = os.path.basename(chunk.metadata["source"])
-    chunk_id = f"{filename}.{chunk.metadata['page']}"
-    print("Processing -", chunk_id)
+    print("🧠 Processing:", chunk_id)
 
-    # Embed the chunk
+    # === Create vector embedding
     chunk_embedding = embedding_provider.embed_query(chunk.page_content)
 
-    # Add the Document and Chunk nodes to the graph
+    # === Save document + chunk nodes to Neo4j
     properties = {
         "filename": filename,
         "chunk_id": chunk_id,
         "text": chunk.page_content,
         "embedding": chunk_embedding
     }
-    
+
     graph.query("""
         MERGE (d:Document {id: $filename})
         MERGE (c:Chunk {id: $chunk_id})
@@ -104,39 +100,30 @@ for chunk in chunks:
         MERGE (d)<-[:PART_OF]-(c)
         WITH c
         CALL db.create.setNodeVectorProperty(c, 'textEmbedding', $embedding)
-        """, 
-        properties
-    )
+    """, properties)
 
-    # Generate the entities and relationships from the chunk
+    # === Extract nodes & relationships from chunk
     graph_docs = doc_transformer.convert_to_graph_documents([chunk])
 
-    # Map the entities in the graph documents to the chunk node
+    # === Connect extracted nodes to Chunk
     for graph_doc in graph_docs:
-        chunk_node = Node(
-            id=chunk_id,
-            type="Chunk"
-        )
-
+        chunk_node = Node(id=chunk_id, type="Chunk")
         for node in graph_doc.nodes:
-
             graph_doc.relationships.append(
-                Relationship(
-                    source=chunk_node,
-                    target=node, 
-                    type="HAS_ENTITY"
-                    )
-                )
+                Relationship(source=chunk_node, target=node, type="HAS_ENTITY")
+            )
 
-    # add the graph documents to the graph
     graph.add_graph_documents(graph_docs)
 
-# Create the vector index
+# === Create vector index (if not exists) ===
 graph.query("""
     CREATE VECTOR INDEX `chunkVector`
     IF NOT EXISTS
     FOR (c: Chunk) ON (c.textEmbedding)
     OPTIONS {indexConfig: {
-    `vector.dimensions`: 1536,
-    `vector.similarity_function`: 'cosine'
-    }};""")
+        `vector.dimensions`: 1536,
+        `vector.similarity_function`: 'cosine'
+    }};
+""")
+
+print("✅ Knowledge graph built successfully.")
