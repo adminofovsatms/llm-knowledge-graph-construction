@@ -1,0 +1,81 @@
+{
+  "document_id": "2013-11-21 Medial rotator strain.pdf",
+  "metadata": {
+    "title": "Medial rotator strain",
+    "player_name": "strainEricsson, Jonathan",
+    "created_by": "",
+    "created_for": "",
+    "created_date": "",
+    "event_time": {
+      "start": "",
+      "end": ""
+    },
+    "location": "",
+    "period": ""
+  },
+  "event_info": {
+    "event_type": "",
+    "event_status": "Injury Acute  0",
+    "games_lost": "",
+    "event_date": "",
+    "event-time": "",
+    "days-lost": "0"
+  },
+  "injury_info": {
+    "injury_date": "",
+    "reported_date": "",
+    "clearance_date": "",
+    "mechanism": "Jonathan is unsure of the exact mechanism of his injury.  He felt the pain during the game but did not bring it to our attention until  after the game.",
+    "requires_surgery": false,
+    "diagnosis": {
+      "name": "Medial rotator strain",
+      "side": "",
+      "body_region": "Diagnosis Verified by Doctor",
+      "code": {
+        "ICD9": "",
+        "SMDCS": "D"
+      },
+      "reinjury": ""
+    },
+    "verified_by_doctor": ""
+  },
+  "therapist_note": {
+    "date": "",
+    "author": "",
+    "subjective": "Pain is located along the area which he points at to be the L border of the inferior sacrum . He is unsure of what happened, he feels the pain when he is walking and L weight bearing and during late stance and early toe  off.",
+    "objective": "Positive tenderness along inferior L border of the sacrum .  Full hip range of motion.  Pain with active hip flex in supine.  Pain with resisted hip internal rotation and  abduction.  Prominent L sacroiliac joint with leg length discrepancy L >R.",
+    "assessment": "Medial rotator strain.",
+    "plan": "Treat conservatively with moderate load and progressively advance treatment as tenderness decreases ."
+  },
+  "diagnosis_history": {
+    "created_by": "",
+    "created_date": "",
+    "event_name": "",
+    "reinjury": "",
+    "diagnosis_code": "",
+    "smdcs_code": "D",
+    "description": "",
+    "side": "",
+    "body_region": "Diagnosis Verified by Doctor"
+  },
+  "activity": {
+    "category": "Unknown",
+    "details": "Not Applicable"
+  },
+  "venue": {
+    "location": "",
+    "session": "",
+    "period": "Game Session:  Detroit/Joe Louis Arena"
+  },
+  "exhibit_25": [],
+  "raw_text_blocks": [
+    {
+      "section": "Mechanism of Injury",
+      "text": "Jonathan is unsure of the exact mechanism of his injury.  He felt the pain during the game but did not bring it to our attention until  after the game."
+    },
+    {
+      "section": "Therapist Note",
+      "text": "Pain is located along the area which he points at to be the L border of the inferior sacrum ... Treat conservatively with moderate load."
+    }
+  ]
+}

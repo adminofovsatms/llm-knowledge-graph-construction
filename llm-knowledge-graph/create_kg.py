@@ -11,7 +11,10 @@ from langchain_community.graphs.graph_document import Node, Relationship
 from dotenv import load_dotenv
 load_dotenv()
 
-DOCS_PATH = "llm-knowledge-graph/data/course/pdf2"
+# Update the path to match your actual directory structure
+DOCS_PATH = "data/course/health-pdf"  # or use absolute path if needed
+# Alternatively, use os.path.join for better compatibility
+# DOCS_PATH = os.path.join(os.path.dirname(__file__), "data", "course", "pdf2")
 
 llm = ChatOpenAI(
     openai_api_key=os.getenv('OPENAI_API_KEY'), 
@@ -31,9 +34,38 @@ graph = Neo4jGraph(
 
 doc_transformer = LLMGraphTransformer(
     llm=llm,
-    allowed_nodes=["Technology", "Concept", "Skill", "Event", "Person", "Object"],
-    allowed_relationships=["USES", "HAS", "IS", "AT", "KNOWS"],
-    node_properties=["name", "description"],
+    allowed_nodes=[
+        "Person", 
+        "Injury", 
+        "BodyRegion", 
+        "Treatment", 
+        "Investigation", 
+        "Event", 
+        "Location", 
+        "MedicalProfessional", 
+        "TimePoint"
+    ],
+    allowed_relationships=[
+        "SUFFERED", 
+        "LOCATED_IN", 
+        "WAS_TREATED_WITH", 
+        "WAS_INVESTIGATED_WITH", 
+        "WAS_ASSESSED_BY", 
+        "OCCURRED_AT", 
+        "HAS_TIMELINE", 
+        "LED_TO", 
+        "ADMINISTERED_BY"
+    ],
+    node_properties=[
+        "name", 
+        "description", 
+        "date", 
+        "specialty", 
+        "severity", 
+        "type",
+        "location",
+        "result"
+    ],
 )
 
 # Load and split the documents
