@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import pdfplumber
 import os
 import json
 from openai import OpenAI
@@ -13,8 +13,36 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_text_from_pdf(file_path):
-    doc = fitz.open(file_path)
-    return "\n".join([page.get_text() for page in doc])
+    with pdfplumber.open(file_path) as pdf:
+        tables_data = []
+        text_content = []
+        
+        for i, page in enumerate(pdf.pages):
+            # Extract tables
+            tables = page.extract_tables()
+            if tables:
+                for table in tables:
+                    tables_data.append(table)
+            
+            # Extract text
+            text_content.append(f"--- PAGE {i+1} ---\n{page.extract_text()}")
+        
+        # Format tables as text with clear structure
+        formatted_tables = []
+        for i, table in enumerate(tables_data):
+            table_text = [f"--- TABLE {i+1} ---"]
+            for row in table:
+                # Filter out None values and convert to strings
+                row_cells = [str(cell) if cell is not None else "" for cell in row]
+                table_text.append(" | ".join(row_cells))
+            formatted_tables.append("\n".join(table_text))
+        
+        # Combine all content
+        all_content = "\n\n".join(text_content)
+        if formatted_tables:
+            all_content += "\n\n--- EXTRACTED TABLES ---\n\n" + "\n\n".join(formatted_tables)
+        
+        return all_content
 
 def build_prompt(pdf_text, filename):
     return f"""
@@ -82,7 +110,7 @@ Given the following PDF content, extract it into a valid **JSON object** using t
     "side": "",
     "body_region": ""
   }},
-  "activity": {{
+  "player_activity": {{
     "category": "",
     "details": ""
   }},
@@ -92,23 +120,16 @@ Given the following PDF content, extract it into a valid **JSON object** using t
     "period": ""
   }},
   "exhibit_25": [],
-  "raw_text_blocks": [
-    {{
-      "section": "Mechanism of Injury",
-      "text": ""
-    }},
-    {{
-      "section": "Diagnosis",
-      "text": ""
-    }},
-    {{
-      "section": "Therapist Note",
-      "text": ""
-    }}
-  ]
+  "attached_files": {{
+    "name": "",
+    "size": "",
+    "created_time": ""
+  }}
 }}
 
-Now here is the raw PDF content:
+The PDF content contains tables and form fields with label-value pairs. Pay special attention to the table structure, where each row typically represents a field and its value. Use the labeled sections from the text to populate the corresponding fields in the JSON schema.
+
+Now here is the raw PDF content with preserved table structure:
 
 \"\"\"{pdf_text}\"\"\"
 
@@ -147,9 +168,12 @@ if __name__ == "__main__":
         if file.endswith(".pdf"):
             pdf_path = os.path.join(PDF_DIR, file)
             print(f"📄 Processing: {file}")
-            extracted_json = extract_json_from_pdf(pdf_path)
-            if extracted_json:
-                out_path = os.path.join(OUTPUT_DIR, file.replace(".pdf", ".json"))
-                with open(out_path, "w", encoding="utf-8") as f:
-                    json.dump(extracted_json, f, indent=2)
-                print(f"✅ Saved JSON: {out_path}")
+            try:
+                extracted_json = extract_json_from_pdf(pdf_path)
+                if extracted_json:
+                    out_path = os.path.join(OUTPUT_DIR, file.replace(".pdf", ".json"))
+                    with open(out_path, "w", encoding="utf-8") as f:
+                        json.dump(extracted_json, f, indent=2)
+                    print(f"✅ Saved JSON: {out_path}")
+            except Exception as e:
+                print(f"❌ Error processing {file}: {str(e)}")
