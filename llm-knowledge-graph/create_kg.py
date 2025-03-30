@@ -33,6 +33,24 @@ graph = Neo4jGraph(
 
 def process_graph_document(graph_doc, filename):
     """Post-process a graph document to ensure it adheres to our schema"""
+
+        # Normalize all node types to valid casing
+    ALLOWED_NODE_TYPES = {
+        "person": "Person",
+        "event": "Event",
+        "injury": "Injury",
+        "diagnosis": "Diagnosis",
+        "medicalnote": "MedicalNote",
+        "location": "Location",
+        "document": "Document",
+        "bodypart": "BodyPart"
+    }
+
+    for node in graph_doc.nodes:
+        if node.type:
+            normalized = node.type.lower()
+            if normalized in ALLOWED_NODE_TYPES:
+                node.type = ALLOWED_NODE_TYPES[normalized]
     
     # Ensure nodes have required properties
     for node in graph_doc.nodes:
@@ -458,9 +476,17 @@ for file in os.listdir(JSON_DIR):
             if therapist_note:
                 therapist_note["note_id"] = f"NOTE-{therapist_note.get('date', '')}-{file}"
             
-            # Convert back to JSON string
+            # Fix document_id to use PDF name BEFORE dumping to JSON
+            if data.get("document_id", "").endswith(".json"):
+                data["document_id"] = file.replace(".json", ".pdf")
+
+            document_id = data.get("document_id", file.replace(".json", ".pdf"))
+
+            # Now convert to JSON string AFTER fixing document_id
             raw_text = json.dumps(data, indent=2)
-            docs.append(Document(page_content=raw_text, metadata={"source": file}))
+            docs.append(Document(page_content=raw_text, metadata={"source": file, "document_id": document_id}))
+
+
 
 print(f"📄 Loaded {len(docs)} JSON documents.")
 
@@ -485,20 +511,19 @@ for chunk in chunks:
 
     # === Save document + chunk nodes to Neo4j
     properties = {
-        "filename": filename,
+        "document_id": chunk.metadata["document_id"],
         "chunk_id": chunk_id,
         "text": chunk.page_content,
         "embedding": chunk_embedding
     }
 
     graph.query("""
-        MERGE (d:Document {document_id: $filename})
         MERGE (c:Chunk {id: $chunk_id})
         SET c.text = $text
-        MERGE (d)<-[:PART_OF]-(c)
         WITH c
         CALL db.create.setNodeVectorProperty(c, 'textEmbedding', $embedding)
     """, properties)
+
 
     # === Extract nodes & relationships from chunk
     graph_docs = doc_transformer.convert_to_graph_documents([chunk])
