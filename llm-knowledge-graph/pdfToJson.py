@@ -53,7 +53,7 @@ Given the following PDF content, extract it into a valid **JSON object** using t
 {{
   "document_id": "{filename}",
   "metadata": {{
-    "title": "Medial rotator strain",
+    "title": "",
     "player_name": "",
     "created_by": "",
     "created_for": "",

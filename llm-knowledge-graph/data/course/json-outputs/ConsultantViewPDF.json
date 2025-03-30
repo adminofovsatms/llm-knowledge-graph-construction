@@ -1,0 +1,76 @@
+{
+  "document_id": "ConsultantViewPDF.pdf",
+  "metadata": {
+    "title": "Rib contusion",
+    "player_name": "Jonathan Ericsson",
+    "created_by": "Piet Van Zant",
+    "created_for": "Anthony Colucci",
+    "created_date": "2018-09-22 20:49",
+    "event_time": {
+      "start": "2018-09-20 20:30",
+      "end": ""
+    },
+    "location": "Detroit/Little Caesars Arena",
+    "period": "3rd Period"
+  },
+  "event_info": {
+    "event_type": "Injury Acute",
+    "event_status": "Inactive",
+    "games_lost": "12",
+    "event_date": "2018-09-20",
+    "event-time": "20:30",
+    "days-lost": "27"
+  },
+  "injury_info": {
+    "injury_date": "2018-09-20 08:30PM Eastern Time",
+    "reported_date": "2018-09-22 07:00PM Eastern Time",
+    "clearance_date": null,
+    "mechanism": "player took a shot under his right pec on rib cage.",
+    "requires_surgery": false,
+    "diagnosis": {
+      "name": "Rib contusion",
+      "side": "N/A",
+      "body_region": "Chest / Ribs / Upper Back",
+      "code": {
+        "ICD9": "847.1",
+        "SMDCS": "TR3223"
+      },
+      "reinjury": "No"
+    },
+    "verified_by_doctor": true
+  },
+  "therapist_note": {
+    "date": "10/14/2018",
+    "author": "Piet Van Zant",
+    "subjective": "Jonathan reported feeling very good this morning and was playing basketball before practice with what he described as heavy contact. Jonathan did report one episode of sharp pain that lasted a few minute.",
+    "objective": "full practice with contact",
+    "assessment": "",
+    "plan": "tolerated well with no major issues, increase activity as tolerated"
+  },
+  "diagnosis_history": {
+    "created_by": "",
+    "created_date": "",
+    "event_name": null,
+    "reinjury": "",
+    "diagnosis_code": "",
+    "smdcs_code": "",
+    "description": "",
+    "side": "",
+    "body_region": ""
+  },
+  "player_activity": {
+    "category": "Hit by puck",
+    "details": "Shot"
+  },
+  "venue": {
+    "location": "Detroit/Little Caesars Arena",
+    "session": "Game",
+    "period": "3rd Period"
+  },
+  "exhibit_25": [],
+  "attached_files": {
+    "name": "ct - ericsson 9-22-18.pdf",
+    "size": "252.080KB",
+    "created_time": "2018-10-25 08:31"
+  }
+}

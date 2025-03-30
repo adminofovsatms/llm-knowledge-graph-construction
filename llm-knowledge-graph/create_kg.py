@@ -34,7 +34,7 @@ graph = Neo4jGraph(
 def process_graph_document(graph_doc, filename):
     """Post-process a graph document to ensure it adheres to our schema"""
 
-        # Normalize all node types to valid casing
+    # Normalize all node types to valid casing
     ALLOWED_NODE_TYPES = {
         "person": "Person",
         "event": "Event",
@@ -43,14 +43,57 @@ def process_graph_document(graph_doc, filename):
         "medicalnote": "MedicalNote",
         "location": "Location",
         "document": "Document",
-        "bodypart": "BodyPart"
+        "bodypart": "BodyPart"  # This ensures consistency for "bodypart"/"BodyPart"
     }
 
+    # Track existing node types by their normalized lowercase id to avoid duplicates
+    existing_nodes_by_type = {}
+    normalized_nodes = []
+    
+    # First pass - normalize node types and collect existing nodes
     for node in graph_doc.nodes:
         if node.type:
-            normalized = node.type.lower()
-            if normalized in ALLOWED_NODE_TYPES:
-                node.type = ALLOWED_NODE_TYPES[normalized]
+            # Convert to lowercase for case-insensitive comparison
+            normalized_type = node.type.lower()
+            
+            if normalized_type in ALLOWED_NODE_TYPES:
+                # Get the correctly cased node type
+                correct_type = ALLOWED_NODE_TYPES[normalized_type]
+                
+                # Create node identity key based on type and name/id properties
+                node_key = None
+                if correct_type == "BodyPart" and "name" in node.properties:
+                    # For BodyPart, use the name and side as the key
+                    side = node.properties.get("side", "unknown")
+                    name = node.properties.get("name", "unknown")
+                    node_key = f"{correct_type.lower()}:{side}:{name}"
+                elif "name" in node.properties:
+                    node_key = f"{correct_type.lower()}:{node.properties['name']}"
+                elif "id" in node.properties:
+                    node_key = f"{correct_type.lower()}:{node.properties['id']}"
+                else:
+                    # Use node.id as fallback
+                    node_key = f"{correct_type.lower()}:{node.id}"
+                
+                # Check if we've already seen this node (by key)
+                if node_key in existing_nodes_by_type:
+                    # Skip this node - we'll use the first one with this key
+                    continue
+                
+                # Update the node type to the correct casing
+                node.type = correct_type
+                
+                # Track this node by its key
+                existing_nodes_by_type[node_key] = node
+                normalized_nodes.append(node)
+            else:
+                # Node type is not in allowed types, skip it
+                print(f"Warning: Node type '{node.type}' not in allowed types. Skipping.")
+    
+    # Replace nodes list with our normalized, deduplicated list
+    graph_doc.nodes = normalized_nodes
+    
+    # Now continue with the rest of the processing...
     
     # Ensure nodes have required properties
     for node in graph_doc.nodes:
@@ -72,7 +115,7 @@ def process_graph_document(graph_doc, filename):
             side = node.properties.get("side", "unknown")
             node.properties["body_part_id"] = f"BODYPART-{side}-{body_region}-{filename}"
     
-    # Find nodes by type
+    # Find nodes by type - must use the correct casing now
     event_nodes = [n for n in graph_doc.nodes if n.type == "Event"]
     injury_nodes = [n for n in graph_doc.nodes if n.type == "Injury"]
     diagnosis_nodes = [n for n in graph_doc.nodes if n.type == "Diagnosis"]
@@ -90,17 +133,23 @@ def process_graph_document(graph_doc, filename):
         side = diagnosis.properties.get("side", "")
         
         if body_region:
-            body_part_node = Node(
-                id=f"BODYPART-{side}-{body_region}-{filename}",
-                type="BodyPart",
-                properties={
-                    "body_part_id": f"BODYPART-{side}-{body_region}-{filename}",
-                    "name": body_region,
-                    "side": side
-                }
-            )
-            graph_doc.nodes.append(body_part_node)
-            body_part_nodes = [body_part_node]
+            # Create a key to check if this node might already exist in a different case
+            node_key = f"bodypart:{side}:{body_region}"
+            
+            # Only create if we don't already have this body part
+            if node_key not in existing_nodes_by_type:
+                body_part_node = Node(
+                    id=f"BODYPART-{side}-{body_region}-{filename}",
+                    type="BodyPart",  # Use the correct casing
+                    properties={
+                        "body_part_id": f"BODYPART-{side}-{body_region}-{filename}",
+                        "name": body_region,
+                        "side": side
+                    }
+                )
+                graph_doc.nodes.append(body_part_node)
+                body_part_nodes = [body_part_node]
+                existing_nodes_by_type[node_key] = body_part_node
     
     # Get the player node (or just use the first person if no player role specified)
     player_nodes = [n for n in person_nodes if n.properties.get("role") == "player"]
@@ -275,6 +324,20 @@ def process_graph_document(graph_doc, filename):
                 Relationship(source=injury_nodes[0], target=diagnosis_nodes[0], type="HAS_DIAGNOSIS")
             )
     
+    # Also fix relationship targets that might still have incorrect type capitalization
+    for relationship in graph_doc.relationships:
+        # Check source node type and correct if needed
+        if relationship.source.type:
+            normalized_type = relationship.source.type.lower()
+            if normalized_type in ALLOWED_NODE_TYPES:
+                relationship.source.type = ALLOWED_NODE_TYPES[normalized_type]
+                
+        # Check target node type and correct if needed
+        if relationship.target.type:
+            normalized_type = relationship.target.type.lower()
+            if normalized_type in ALLOWED_NODE_TYPES:
+                relationship.target.type = ALLOWED_NODE_TYPES[normalized_type]
+    
     return graph_doc
 
 
@@ -283,7 +346,7 @@ doc_transformer = LLMGraphTransformer(
     llm=llm,
     allowed_nodes=[
         "Person", "Event", "Injury", "Diagnosis", "MedicalNote", 
-        "Location", "Document", "BodyPart"
+        "Location", "Document", "BodyPart"  # Note: only "BodyPart" is allowed, not "Bodypart"
     ],
     allowed_relationships=[
         "EXPERIENCED", "RESULTED_IN", "HAS_DIAGNOSIS", "OCCURRED_AT", 
@@ -337,7 +400,7 @@ Node Types:
 5. MedicalNote - SOAP notes and assessments from medical staff
 6. Location - Where the event occurred (venue, session type)
 7. Document - The medical record document itself
-8. BodyPart - The specific body part affected (e.g., "Hip / Groin")
+8. BodyPart - The specific body part affected (e.g., "Hip / Groin") - IMPORTANT: Always use "BodyPart" with this exact capitalization
 
 Relationships FROM PERSON (these are the most important):
 1. (Person)-[EXPERIENCED]->(Event) - A player experienced an event
@@ -354,11 +417,12 @@ Other important relationships:
 3. (Injury)-[LOCATED_IN]->(BodyPart) - The injury is located in a specific body part
 4. (Document)-[CREATED_BY]->(Person) - Who created the document
 5. (Person)-[AUTHORED]->(MedicalNote) - Who authored medical notes
+6. (Diagnosis)-[HAS_BODY_PART]->(BodyPart) - The diagnosis is for a specific body part
 
 When extracting nodes and relationships from the text, be sure to:
 1. Make the player/patient the central node with direct relationships to all other entities
 2. Correctly identify people by their roles (player, therapist, doctor, staff)
-3. Create a BodyPart node for each injured body part
+3. Create a BodyPart node for each injured body part (ALWAYS use "BodyPart" with exact capitalization)
 4. Ensure the Person node has direct relationships to all other relevant nodes
 """
 
