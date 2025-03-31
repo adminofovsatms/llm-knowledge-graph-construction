@@ -17,7 +17,7 @@ graph = Neo4jGraph(
     password=os.getenv('NEO4J_PASSWORD')
 )
 
-CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database.
+CYPHER_GENERATION_TEMPLATE = """Task: Generate Cypher statement to query a graph database.
 Instructions:
 Use only the provided relationship types and properties in the schema.
 Do not use any other relationship types or properties that are not provided.
@@ -54,13 +54,17 @@ cypher_chain = GraphCypherQAChain.from_llm(
     llm,
     graph=graph,
     cypher_prompt=cypher_generation_prompt,
-    verbose=True,
+    verbose=False,  # 👈 turn off verbose output
     enhanced_schema=True,
     allow_dangerous_requests=True
 )
 
 def run_cypher(q):
-    return cypher_chain.invoke({"query": q})
+    try:
+        result = cypher_chain.invoke({"query": q})
+        return result.get("result", "❌ No answer found.")
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
 while (q := input("> ")) != "exit":
     print(run_cypher(q))
