@@ -1,9 +1,9 @@
 import os
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_neo4j import GraphCypherQAChain, Neo4jGraph
 from langchain.prompts import PromptTemplate
 
-from dotenv import load_dotenv
 load_dotenv()
 
 llm = ChatOpenAI(
@@ -28,6 +28,20 @@ Always use case insensitive search when matching strings.
 Schema:
 {schema}
 
+Examples:
+# Find all documents that mention a specific technology
+MATCH (d:Document)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(t:Technology)
+WHERE t.id =~ '(?i)Langchain'
+RETURN d
+
+# Count all chunks
+MATCH (c:Chunk)
+RETURN COUNT(c) AS numberOfChunks
+
+# Find people mentioned
+MATCH (c:Chunk)-[:HAS_ENTITY]->(p:Person)
+RETURN DISTINCT p.id
+
 The question is:
 {question}"""
 
@@ -41,6 +55,7 @@ cypher_chain = GraphCypherQAChain.from_llm(
     graph=graph,
     cypher_prompt=cypher_generation_prompt,
     verbose=True,
+    enhanced_schema=True,
     allow_dangerous_requests=True
 )
 
