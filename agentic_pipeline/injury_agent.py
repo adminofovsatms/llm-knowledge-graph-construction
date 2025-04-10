@@ -29,6 +29,9 @@ class InjuryAgent:
         WITH i
         MATCH (p:Person {name: $person})
         MERGE (p)-[:HAD_INJURY]->(i)
+        WITH i
+        MATCH (b:BodyPart {name: $body_region})
+        MERGE (i)-[:LOCATED_IN]->(b)
         RETURN i
         """
 
@@ -37,5 +40,6 @@ class InjuryAgent:
             "injury_date": parse_neo4j_date(injury_data["injury_date"]),
             "pain_level": injury_data.get("pain_level", "Moderate"),
             "pain_description": injury_data.get("pain_description", ""),
-            "person": PERSON_NAME
+            "person": PERSON_NAME,
+            "body_region": injury_data["body_region"]
         })

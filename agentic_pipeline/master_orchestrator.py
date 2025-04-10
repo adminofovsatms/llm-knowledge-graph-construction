@@ -28,8 +28,9 @@ for file in os.listdir(JSON_DIR):
             injury_agent.upsert({
                 "injury_id": injury_id,
                 "injury_date": injury_date,
-                "pain_level": "Moderate",
-                "pain_description": "Pulled muscle in upper thigh"
+                "pain_level": data.get("injury_info", {}).get("pain_level", "Moderate"),
+                "pain_description": data.get("therapist_note", {}).get("subjective", ""),
+                "body_region": body_part_name
             })
 
 print("✅ Stick-figure injury graph created.")
