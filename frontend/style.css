@@ -22,3 +22,17 @@ body {
     height: 95vh;
     width: 100%;
   }  
+
+  #injury-details {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 300px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    z-index: 999;
+  }  

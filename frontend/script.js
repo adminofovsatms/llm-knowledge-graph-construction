@@ -36,14 +36,24 @@ const cy = cytoscape({
       const response = await fetch(`http://127.0.0.1:5000/api/stick-figure?t=${timeline}`);
       const data = await response.json();
   
-      console.log("Fetched Data:", data);  // DEBUG LINE
-  
       const { nodes, edges } = data;
   
-      cy.elements().remove();         // Clear previous data
-      cy.add([...nodes, ...edges]);  // Add new data
+      cy.elements().remove();         
+      cy.add([...nodes, ...edges]);  
       cy.layout({ name: 'preset' }).run();
+  
+      // Add node click handler
+      cy.on('tap', 'node', function(evt) {
+        const node = evt.target;
+        const label = node.data('label');
+        const injury = node.data('injury');
+        
+        document.getElementById('injury-details').innerHTML = `
+          <h3>${label}</h3>
+          <p>${injury || "No injury information available."}</p>
+        `;
+      });
     } catch (err) {
       console.error("Failed to load data:", err);
     }
-  }    
+  }      
