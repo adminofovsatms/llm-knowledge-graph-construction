@@ -4,9 +4,14 @@ from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from agentic_pipeline.config import graph, PERSON_NAME
+from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 JSON_DIR = "llm-knowledge-graph/data/course/json-outputs"
 

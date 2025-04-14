@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Jonathan's Injury Timeline</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
 </head>
 <body>
@@ -12,8 +12,13 @@
     <button onclick="loadData('past')">Past</button>
     <button onclick="loadData('present')">Present</button>
   </div>
+
   <div id="cy"></div>
-  <div id="injury-details">Click a body part to see injury details here.</div>
-  <script src="./script.js"></script>
+
+  <div id="injury-details">
+    Click a body part to see injury details here.
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
