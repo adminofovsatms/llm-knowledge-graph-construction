@@ -1,56 +1,58 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, send_from_directory, url_for
 from flask_cors import CORS
 from agentic_pipeline.config import graph, PERSON_NAME
-from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
 JSON_DIR = "llm-knowledge-graph/data/course/json-outputs"
 
-# Simple normalization rules to map JSON values to graph node names
 NORMALIZATION_RULES = {
     "hip / groin": ["Hip Left", "Hip Right", "Groin"],
     "chest / ribs / upper back": ["Chest", "Upper Back"]
 }
 
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-def get_latest_json(timeline):
-    def extract_date(json_data):
-        date_str = json_data.get("injury_info", {}).get("injury_date", "")
-        try:
-            return datetime.strptime(date_str[:10], "%Y-%m-%d")
-        except Exception:
-            return datetime.min if timeline == "present" else datetime.max
-
-    best_data, best_date = None, None
+@app.route("/api/timeline")
+def get_timeline_years():
+    years = []
     for file in os.listdir(JSON_DIR):
         if file.endswith(".json"):
             with open(os.path.join(JSON_DIR, file), "r", encoding="utf-8") as f:
                 data = json.load(f)
-                dt = extract_date(data)
-                if best_date is None:
-                    best_data, best_date = data, dt
-                elif timeline == "present" and dt > best_date:
-                    best_data, best_date = data, dt
-                elif timeline == "past" and dt < best_date:
-                    best_data, best_date = data, dt
-    return best_data
+                injury_date = data.get("injury_info", {}).get("injury_date", "")
+                try:
+                    year = datetime.strptime(injury_date[:10], "%Y-%m-%d").year
+                    if year not in years:
+                        years.append(year)
+                except:
+                    continue
+    return jsonify(sorted(years))
 
+def get_json_by_year(year):
+    for file in os.listdir(JSON_DIR):
+        if file.endswith(".json"):
+            with open(os.path.join(JSON_DIR, file), "r", encoding="utf-8") as f:
+                data = json.load(f)
+                date_str = data.get("injury_info", {}).get("injury_date", "")
+                try:
+                    if datetime.strptime(date_str[:10], "%Y-%m-%d").year == int(year):
+                        return data
+                except:
+                    continue
+    return {}
 
 def normalize_body_region(region):
     region = region.lower().strip()
     return NORMALIZATION_RULES.get(region, [])
 
-
-def get_body_parts_with_injury_info(injured_parts, timeline, injury_details):
+def get_body_parts_with_injury_info(injured_parts, year, injury_details):
     query = """
     MATCH (p:Person {name: $name})-[:HAS_BODY_PART]->(b:BodyPart)
     RETURN b.name as name, b.x as x, b.y as y
@@ -59,27 +61,25 @@ def get_body_parts_with_injury_info(injured_parts, timeline, injury_details):
 
     for p in parts:
         if p["name"] in injured_parts:
-            p["color"] = "red" if timeline == "present" else "red"
+            p["color"] = "red"
             p["injury"] = injury_details
         else:
             p["color"] = "#bbb"
             p["injury"] = "No known injury for this body part."
     return parts
 
-
 @app.route("/api/stick-figure")
 def stick_figure():
-    timeline = request.args.get("t", "past")
-    json_data = get_latest_json(timeline)
+    year = request.args.get("t")
+    data = get_json_by_year(year)
 
-    raw_region = json_data.get("injury_info", {}).get("diagnosis", {}).get("body_region", "")
+    raw_region = data.get("injury_info", {}).get("diagnosis", {}).get("body_region", "")
     injured_parts = normalize_body_region(raw_region)
 
-    injury_details = json_data.get("therapist_note", {}).get("subjective", "No details available.")
-    body_parts = get_body_parts_with_injury_info(injured_parts, timeline, injury_details)
+    injury_details = data.get("therapist_note", {}).get("subjective", "No details available.")
+    body_parts = get_body_parts_with_injury_info(injured_parts, year, injury_details)
 
-    nodes = []
-    edges = []
+    nodes, edges = [], []
     for bp in body_parts:
         nodes.append({
             "data": {
@@ -110,7 +110,6 @@ def stick_figure():
         connect(a, b)
 
     return jsonify({"nodes": nodes, "edges": edges})
-
 
 if __name__ == "__main__":
     app.run(debug=True)

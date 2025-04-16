@@ -8,13 +8,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
 </head>
 <body>
-  <div class="controls">
-    <button onclick="loadData('past')">Past</button>
-    <button onclick="loadData('present')">Present</button>
-  </div>
+  <!-- New Timeline -->
+  <section class="cd-h-timeline js-cd-h-timeline margin-bottom-md" id="timeline">
+    <div class="cd-h-timeline__nav-wrapper">
+      <a href="#0" class="cd-h-timeline__nav cd-h-timeline__nav--prev" id="prev-btn" style="display: none;">&#10094;</a>
+      <div class="cd-h-timeline__line-wrapper">
+        <div class="cd-h-timeline__line">
+          <ol id="date-list">
+            <!-- JS will populate -->
+          </ol>
+          <span class="cd-h-timeline__filling-line" aria-hidden="true"></span>
+        </div>
+      </div>
+      <a href="#0" class="cd-h-timeline__nav cd-h-timeline__nav--next" id="next-btn" style="display: none;">&#10095;</a>
+    </div>
+  </section>  
 
+  <!-- Stick Figure Graph -->
   <div id="cy"></div>
 
+  <!-- Injury Details Panel -->
   <div id="injury-details">
     Click a body part to see injury details here.
   </div>

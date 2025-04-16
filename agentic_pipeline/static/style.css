@@ -1,38 +1,107 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #f5f5f5;
-  }
-  
-  .controls {
-    padding: 10px;
-    text-align: center;
-    background: #fff;
-    border-bottom: 1px solid #ccc;
-  }
-  
-  button {
-    padding: 10px 20px;
-    margin: 0 10px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  #cy {
-    height: 95vh;
-    width: 100%;
-  }  
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+}
 
-  #injury-details {
-    position: fixed;
-    top: 60px;
-    right: 20px;
-    width: 300px;
-    padding: 15px;
-    background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    border-radius: 10px;
-    font-size: 14px;
-    color: #333;
-    z-index: 999;
-  }  
+.cd-h-timeline__nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 10px;
+  position: relative;
+}
+
+.cd-h-timeline__line-wrapper {
+  flex: 1;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.cd-h-timeline__line {
+  height: 4px;
+  background: #ccc;
+  position: relative;
+  margin: 40px 0 0;
+  transition: all 0.3s;
+}
+
+.cd-h-timeline__line ol {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.cd-h-timeline__line ol li a {
+  position: relative;
+  top: -30px; /* more gap between line and year label */
+  color: #2c3e50;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background-color: transparent;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.cd-h-timeline__line ol li a.cd-h-timeline__date--selected {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.cd-h-timeline__filling-line {
+  height: 4px;
+  background: #2c3e50;
+  width: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: width 0.3s ease;
+}
+
+.cd-h-timeline__nav {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  text-decoration: none;
+  padding: 0 15px;
+  user-select: none;
+}
+
+.cd-h-timeline__nav--prev {
+  position: absolute;
+  left: -30px;
+  top: 10px;
+}
+
+.cd-h-timeline__nav--next {
+  position: absolute;
+  right: -30px;
+  top: 10px;
+}
+
+/* Graph Area */
+#cy {
+  height: 90vh;
+  width: 100%;
+}
+
+/* Right Panel */
+#injury-details {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 300px;
+  padding: 15px;
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  border-radius: 10px;
+  font-size: 14px;
+  color: #333;
+  z-index: 999;
+}
