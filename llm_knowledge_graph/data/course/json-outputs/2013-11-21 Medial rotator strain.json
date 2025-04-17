@@ -48,15 +48,15 @@
     "plan": "Treat conservatively with mod and progressively advance treatment as tenderness decreases."
   },
   "diagnosis_history": {
-    "created_by": "",
-    "created_date": "",
+    "created_by": "Russ Baumann",
+    "created_date": "2013-11-22 10:00:44AM",
     "event_name": null,
-    "reinjury": "",
-    "diagnosis_code": "",
-    "smdcs_code": "",
-    "description": "",
-    "side": "",
-    "body_region": ""
+    "reinjury": "No",
+    "diagnosis_code": "843.8",
+    "smdcs_code": "HI1507",
+    "description": "Medial rotator strain",
+    "side": "Left",
+    "body_region": "Hip / Groin"
   },
   "player_activity": {
     "category": "Unknown",

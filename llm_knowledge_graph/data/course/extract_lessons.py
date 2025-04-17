@@ -7,7 +7,7 @@ import glob
 from fpdf import FPDF
 
 COURSES_REPO_PATH = "../../courses"
-DATA_PATH = "llm-knowledge-graph/data/course"
+DATA_PATH = "llm_knowledge_graph/data/course"
 PDF_PATH = os.path.join(DATA_PATH, 'pdfs')
 FONT_PATH = os.path.join(DATA_PATH, 'CourierPrime-Regular.ttf')
 

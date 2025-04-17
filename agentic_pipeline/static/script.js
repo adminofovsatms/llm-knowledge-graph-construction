@@ -33,90 +33,94 @@ const cy = cytoscape({
 
 async function loadData(date) {
   try {
-    const response = await fetch(`/api/stick-figure?t=${date}`);
-    const data = await response.json();
+    const figureRes = await fetch(`/api/stick-figure?t=${date}`);
+    const { nodes, edges } = await figureRes.json();
 
-    const { nodes, edges } = data;
     cy.elements().remove();
     cy.add([...nodes, ...edges]);
     cy.layout({ name: 'preset' }).run();
 
+    document.getElementById('injury-details').innerText = "Click a body part to see injury details.";
+
     cy.off('tap');
-    cy.on('tap', 'node', function(evt) {
+    cy.on('tap', 'node', async function (evt) {
       const node = evt.target;
       const label = node.data('label');
-      const injury = node.data('injury');
+      const color = node.data('color');
+      const year = document.querySelector(".swiper-slide-active .timestamp span")?.innerText;
 
-      document.getElementById('injury-details').innerHTML = `
-        <h3>${label}</h3>
-        <p>${injury || "No injury information available."}</p>
-      `;
+      if (color === "red" && year) {
+        document.getElementById('injury-details').innerHTML = `<p>Loading injury story for ${label}...</p>`;
+        try {
+          const res = await fetch(`/api/injury-story?t=${year}`);
+          const data = await res.json();
+          if (data.story) {
+            document.getElementById('injury-details').innerHTML = `
+              <h3>${label} - Injury Story (${year})</h3>
+              <p style="white-space: pre-wrap;">${data.story}</p>
+            `;
+          } else {
+            document.getElementById('injury-details').innerText = `No story found for ${label}.`;
+          }
+        } catch (err) {
+          console.error("Error loading story:", err);
+          document.getElementById('injury-details').innerText = "Failed to load injury story.";
+        }
+      } else {
+        const injury = node.data('injury');
+        document.getElementById('injury-details').innerHTML = `
+          <h3>${label}</h3>
+          <p>${injury || "No known injury for this body part."}</p>
+        `;
+      }
     });
+
   } catch (err) {
     console.error("Failed to load data:", err);
+    document.getElementById('injury-details').innerText = "Error fetching stick figure data.";
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch("/api/timeline");
   const dates = await res.json();
-  const dateList = document.getElementById("date-list");
-  const fillingLine = document.querySelector(".cd-h-timeline__filling-line");
-  const prevBtn = document.getElementById("prev-btn");
-  const nextBtn = document.getElementById("next-btn");
+  const timeline = document.getElementById("timeline");
 
-  let activeIndex = 0;
-
-  // Populate timeline dates
-  dates.forEach((date, i) => {
-    const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.href = "#0";
-    a.dataset.date = date;
-    a.innerText = date;
-    a.classList.add("cd-h-timeline__date");
-    if (i === 0) a.classList.add("cd-h-timeline__date--selected");
-
-    a.addEventListener("click", () => {
-      document.querySelectorAll(".cd-h-timeline__date").forEach(el => el.classList.remove("cd-h-timeline__date--selected"));
-      a.classList.add("cd-h-timeline__date--selected");
-      activeIndex = i;
-      loadData(date);
-      updateFillingLine(i, dates.length);
-      updateNavVisibility();
-    });
-
-    li.appendChild(a);
-    dateList.appendChild(li);
+  // Populate timeline dynamically
+  dates.forEach((date) => {
+    const slide = document.createElement("div");
+    slide.classList.add("swiper-slide");
+    slide.innerHTML = `
+      <div class="timestamp">
+        <span>${date}</span>
+      </div>
+      <div class="status">
+        <span>${date}</span>
+      </div>
+    `;
+    timeline.appendChild(slide);
   });
 
-  function updateFillingLine(index, total) {
-    const percent = (index / (total - 1)) * 100;
-    fillingLine.style.width = `${percent}%`;
-  }
+  // Initialize Swiper without pagination
+  const swiper = new Swiper('.swiper-container', {
+    slidesPerView: 3,
+    centeredSlides: true,
+    spaceBetween: 30,
+    grabCursor: true,
+    on: {
+      slideChange: () => {
+        const activeSlide = document.querySelector(".swiper-slide-active .timestamp span");
+        if (activeSlide) {
+          const date = activeSlide.innerText;
+          loadData(date);
+        }
+      }
+    }
+  });
 
-  function updateNavVisibility() {
-    prevBtn.style.display = activeIndex > 0 ? 'inline-block' : 'none';
-    nextBtn.style.display = activeIndex < dates.length - 1 ? 'inline-block' : 'none';
-  }
-
+  // Load initial data
   if (dates.length) {
     loadData(dates[0]);
-    updateFillingLine(0, dates.length);
-    updateNavVisibility();
+    swiper.slideTo(0, 0); // Ensure first slide is active
   }
-
-  prevBtn.addEventListener("click", () => {
-    if (activeIndex > 0) {
-      activeIndex--;
-      document.querySelectorAll(".cd-h-timeline__date")[activeIndex].click();
-    }
-  });
-
-  nextBtn.addEventListener("click", () => {
-    if (activeIndex < dates.length - 1) {
-      activeIndex++;
-      document.querySelectorAll(".cd-h-timeline__date")[activeIndex].click();
-    }
-  });
 });

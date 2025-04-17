@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-JSON_DIR = "llm-knowledge-graph/data/course/json-outputs"
+JSON_DIR = "llm_knowledge_graph/data/course/json-outputs"
 
 body_agent = BodyPartAgent()
 injury_agent = InjuryAgent()

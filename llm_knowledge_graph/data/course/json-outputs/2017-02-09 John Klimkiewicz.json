@@ -1,0 +1,76 @@
+{
+  "document_id": "2017-02-09 John Klimkiewicz.pdf",
+  "metadata": {
+    "title": "Visiting Team Injury Report",
+    "player_name": "Ericsson, Jonathan",
+    "created_by": "",
+    "created_for": "",
+    "created_date": "2017-02-09",
+    "event_time": {
+      "start": "2017-02-09",
+      "end": "2017-02-09"
+    },
+    "location": "verizon center",
+    "period": ""
+  },
+  "event_info": {
+    "event_type": "Injury Report",
+    "event_status": "Finalized",
+    "games_lost": "",
+    "event_date": "2017-02-09",
+    "event-time": "EST",
+    "days-lost": ""
+  },
+  "injury_info": {
+    "injury_date": "2017-02-09",
+    "reported_date": "2017-02-09",
+    "clearance_date": null,
+    "mechanism": "fall on outstretched hand as checked into boards",
+    "requires_surgery": false,
+    "diagnosis": {
+      "name": "left scaphoid fracture",
+      "side": "left",
+      "body_region": "wrist",
+      "code": {
+        "ICD9": "",
+        "SMDCS": ""
+      },
+      "reinjury": ""
+    },
+    "verified_by_doctor": true
+  },
+  "therapist_note": {
+    "date": "",
+    "author": "",
+    "subjective": "",
+    "objective": "tender over snuff box. No swelling. Limited wrist dorsiflexion",
+    "assessment": "Xray c/w waist scaphoid fracture, minimally displaced",
+    "plan": "splint, consult with team physician"
+  },
+  "diagnosis_history": {
+    "created_by": "",
+    "created_date": "",
+    "event_name": null,
+    "reinjury": "",
+    "diagnosis_code": "",
+    "smdcs_code": "",
+    "description": "left scaphoid fracture",
+    "side": "left",
+    "body_region": "wrist"
+  },
+  "player_activity": {
+    "category": "",
+    "details": ""
+  },
+  "venue": {
+    "location": "verizon center",
+    "session": "",
+    "period": ""
+  },
+  "exhibit_25": [],
+  "attached_files": {
+    "name": "ERICKSSON2.jpg, ERICKSSON1.jpg",
+    "size": "250.847KB, 372.945KB",
+    "created_time": "2017-02-09 20:19"
+  }
+}

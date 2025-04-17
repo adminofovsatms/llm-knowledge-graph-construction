@@ -11,11 +11,11 @@ from langchain_community.graphs.graph_document import Node, Relationship
 from dotenv import load_dotenv
 load_dotenv()
 
-DOCS_PATH = "llm-knowledge-graph/data/course/pdfs"
+DOCS_PATH = "llm_knowledge_graph/data/course/pdfs"
 
 llm = ChatOpenAI(
     openai_api_key=os.getenv('OPENAI_API_KEY'), 
-    model_name="gpt-3.5-turbo"
+    model_name="gpt-4o"
 )
 
 embedding_provider = OpenAIEmbeddings(
@@ -29,20 +29,7 @@ graph = Neo4jGraph(
     password=os.getenv('NEO4J_PASSWORD')
 )
 
-doc_transformer = LLMGraphTransformer(
-    llm=llm,
-    )
-
-# Load and split the documents
-# tag::csv_loader[]
-from langchain_community.document_loaders.csv_loader import CSVLoader
-
-loader = CSVLoader(file_path="path/to/csv_file.csv")
-# end::csv_loader[]
-
-# tag::loader[]
 loader = DirectoryLoader(DOCS_PATH, glob="**/*.pdf", loader_cls=PyPDFLoader)
-# end::loader[]
 
 text_splitter = CharacterTextSplitter(
     separator="\n\n",
@@ -50,6 +37,30 @@ text_splitter = CharacterTextSplitter(
     chunk_overlap=200,
 )
 
+# tag::allowed_nodes[]
+doc_transformer = LLMGraphTransformer(
+    llm=llm,
+    allowed_nodes=["Technology", "Concept", "Skill", "Event", "Person", "Object"],
+    )
+# end::allowed_nodes[]
+
+"""
+# tag::allowed_relationships[]
+doc_transformer = LLMGraphTransformer(
+    llm=llm,
+    allowed_nodes=["Technology", "Concept", "Skill", "Event", "Person", "Object"],
+    allowed_relationships=["USES", "HAS", "IS", "AT", "KNOWS"],
+)
+# end::allowed_relationships[]
+
+# tag::node_properties[]
+doc_transformer = LLMGraphTransformer(
+    llm=llm,
+    allowed_nodes=["Technology", "Concept", "Skill", "Event", "Person", "Object"],
+    node_properties=["name", "description"],
+)
+# end::node_properties[]
+"""
 docs = loader.load()
 chunks = text_splitter.split_documents(docs)
 
@@ -81,7 +92,7 @@ for chunk in chunks:
         properties
     )
 
-    # Generate the entities and relationships from the chunk
+    # Generate the graph docs
     graph_docs = doc_transformer.convert_to_graph_documents([chunk])
 
     # Map the entities in the graph documents to the chunk node

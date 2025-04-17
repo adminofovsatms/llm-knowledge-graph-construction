@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # File path - update this with your CSV path
-CSV_PATH = "llm-knowledge-graph/data/course/health-csv/imdb_movies.csv"
+CSV_PATH = "llm_knowledge_graph/data/course/health-csv/imdb_movies.csv"
 
 llm = ChatOpenAI(   
     openai_api_key=os.getenv('OPENAI_API_KEY'), 
-    model_name="gpt-3.5-turbo"
+    model_name="gpt-4o"
 )
 
 graph = Neo4jGraph(

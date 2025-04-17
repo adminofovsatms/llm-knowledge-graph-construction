@@ -8,7 +8,7 @@ from agentic_pipeline.config import graph, PERSON_NAME
 app = Flask(__name__)
 CORS(app)
 
-JSON_DIR = "llm-knowledge-graph/data/course/json-outputs"
+JSON_DIR = "llm_knowledge_graph/data/course/json-outputs"
 
 NORMALIZATION_RULES = {
     "hip / groin": ["Hip Left", "Hip Right", "Groin"],
@@ -110,6 +110,52 @@ def stick_figure():
         connect(a, b)
 
     return jsonify({"nodes": nodes, "edges": edges})
+
+from llm_knowledge_graph.pdfToJson import extract_text_from_pdf
+
+@app.route("/api/injury-story")
+def get_injury_story():
+    year = request.args.get("t")
+    json_data = get_json_by_year(year)
+    if not json_data:
+        return jsonify({"error": "No data found for the given year."}), 404
+
+    # Derive matching PDF filename from json["document_id"]
+    document_id = json_data.get("document_id", "")
+    pdf_file = document_id if document_id.endswith(".pdf") else document_id.replace(".json", ".pdf")
+    pdf_path = os.path.join("llm_knowledge_graph", "data", "course", "health-pdf", pdf_file)
+
+    if not os.path.exists(pdf_path):
+        return jsonify({"error": "Related PDF not found."}), 404
+
+    pdf_text = extract_text_from_pdf(pdf_path)
+
+    prompt = f"""
+You are a helpful medical assistant.
+
+Summarize the following medical report as a short, easy-to-understand injury story for doctors and patients.
+
+Only highlight important details: when and where the injury happened, what body parts are involved, whether it needed surgery, how severe it was, and any next steps.
+
+Here is the report content:
+
+\"\"\"{pdf_text}\"\"\"
+
+Provide the story in clear paragraphs. Avoid bullet points or technical jargon.
+"""
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5
+        )
+        summary = response.choices[0].message.content.strip()
+        return jsonify({"story": summary})
+    except Exception as e:
+        return jsonify({"error": f"LLM Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

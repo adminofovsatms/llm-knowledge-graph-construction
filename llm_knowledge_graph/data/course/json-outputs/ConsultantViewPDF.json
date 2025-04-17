@@ -2,7 +2,7 @@
   "document_id": "ConsultantViewPDF.pdf",
   "metadata": {
     "title": "Rib contusion",
-    "player_name": "Jonathan Ericsson",
+    "player_name": "Ericsson, Jonathan",
     "created_by": "Piet Van Zant",
     "created_for": "Anthony Colucci",
     "created_date": "2018-09-22 20:49",
@@ -24,7 +24,7 @@
   "injury_info": {
     "injury_date": "2018-09-20 08:30PM Eastern Time",
     "reported_date": "2018-09-22 07:00PM Eastern Time",
-    "clearance_date": null,
+    "clearance_date": "2018-10-20 10:00AM Eastern Time",
     "mechanism": "player took a shot under his right pec on rib cage.",
     "requires_surgery": false,
     "diagnosis": {
@@ -48,15 +48,15 @@
     "plan": "tolerated well with no major issues, increase activity as tolerated"
   },
   "diagnosis_history": {
-    "created_by": "",
-    "created_date": "",
+    "created_by": "Anthony Colucci",
+    "created_date": "2018-09-22 8:49:11PM",
     "event_name": null,
-    "reinjury": "",
-    "diagnosis_code": "",
-    "smdcs_code": "",
-    "description": "",
-    "side": "",
-    "body_region": ""
+    "reinjury": "No",
+    "diagnosis_code": "847.1",
+    "smdcs_code": "TR3223",
+    "description": "Rib contusion",
+    "side": "N/A",
+    "body_region": "Chest / Ribs / Upper Back"
   },
   "player_activity": {
     "category": "Hit by puck",

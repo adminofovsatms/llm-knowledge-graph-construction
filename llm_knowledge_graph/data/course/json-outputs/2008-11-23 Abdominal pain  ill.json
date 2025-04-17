@@ -1,0 +1,76 @@
+{
+  "document_id": "2008-11-23 Abdominal pain  ill.pdf",
+  "metadata": {
+    "title": "Abdominal pain / ill",
+    "player_name": "Ericsson, Jonathan",
+    "created_by": "Rob Snitzer",
+    "created_for": "Rob Snitzer",
+    "created_date": "2008-11-24 06:09",
+    "event_time": {
+      "start": "2008-11-23 16:00",
+      "end": ""
+    },
+    "location": "On Ice",
+    "period": ""
+  },
+  "event_info": {
+    "event_type": "Injury Acute",
+    "event_status": "Inactive",
+    "games_lost": "0",
+    "event_date": "2008-11-23",
+    "event-time": "16:00",
+    "days-lost": "1"
+  },
+  "injury_info": {
+    "injury_date": "2008-11-23 15:00",
+    "reported_date": "",
+    "clearance_date": "2008-11-25 09:00",
+    "mechanism": "Insiduous onset, possibly related to heavy abdominal workout.",
+    "requires_surgery": false,
+    "diagnosis": {
+      "name": "Abdominal pain / illness",
+      "side": "N/A",
+      "body_region": "Abdomen",
+      "code": {
+        "ICD9": "789.0",
+        "SMDCS": "AB0051"
+      },
+      "reinjury": "No"
+    },
+    "verified_by_doctor": true
+  },
+  "therapist_note": {
+    "date": "2008-11-23",
+    "author": "Rob Snitzer",
+    "subjective": "Feeling of pain all over abdomen. Somewhat stronger on right side, upper and lower quadrants.",
+    "objective": "Jonathan presents with abdominal pain. He denies any nausea, vomitting or bowel issues. He admits to regular bowel movements on each of the previous 4 days. Denies feeling sick and has a temperature of 97.7 Jonathan does relate to me that he did a very hard core/abdominal workout several days before and has been feeling his abdominals getting a little more sore on each of the previous two or three days. Jonathan denies being hit in the abdomen in any of the previous two games.",
+    "assessment": "Sit-up from the supine position does cause some discomfort, double leg, oblique situps are negative. Resisted hip flexion with knee flexed and extended are also negative for pain. palpation does cause pain along the lateral border of the rectus abdominus of the right side. The left side s osmewhat sore but not as tender as the right. Does not complain of any rebound tenderness.",
+    "plan": "Watchful waiting over the next day or so. Evaluate his condition upon returning to Grand Rapids and have him examined if he is no better."
+  },
+  "diagnosis_history": {
+    "created_by": "Rob Snitzer",
+    "created_date": "2008-11-26 10:33:48PM",
+    "event_name": null,
+    "reinjury": "No",
+    "diagnosis_code": "847.2",
+    "smdcs_code": "AB1107",
+    "description": "Rectus Abdominus strain",
+    "side": "Right",
+    "body_region": "Abdomen"
+  },
+  "player_activity": {
+    "category": "Practice",
+    "details": "Jonathan comes in this morning feeling much better. He skated full practice today, and did not request any treatment."
+  },
+  "venue": {
+    "location": "Other",
+    "session": "Practice",
+    "period": ""
+  },
+  "exhibit_25": [],
+  "attached_files": {
+    "name": "Ericsson Non specific abdominal pain 11-26-08.pdf",
+    "size": "279.841KB",
+    "created_time": "2008-11-26 22:32"
+  }
+}

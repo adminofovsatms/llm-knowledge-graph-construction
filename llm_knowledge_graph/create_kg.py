@@ -53,47 +53,13 @@ def process_graph_document(graph_doc, filename):
     # First pass - normalize node types and collect existing nodes
     for node in graph_doc.nodes:
         if node.type:
-            # Convert to lowercase for case-insensitive comparison
-            normalized_type = node.type.lower()
-            
-            if normalized_type in ALLOWED_NODE_TYPES:
-                # Get the correctly cased node type
-                correct_type = ALLOWED_NODE_TYPES[normalized_type]
-                
-                # Create node identity key based on type and name/id properties
-                node_key = None
-                if correct_type == "BodyPart" and "name" in node.properties:
-                    # For BodyPart, use the name and side as the key
-                    side = node.properties.get("side", "unknown")
-                    name = node.properties.get("name", "unknown")
-                    node_key = f"{correct_type.lower()}:{side}:{name}"
-                elif "name" in node.properties:
-                    node_key = f"{correct_type.lower()}:{node.properties['name']}"
-                elif "id" in node.properties:
-                    node_key = f"{correct_type.lower()}:{node.properties['id']}"
-                else:
-                    # Use node.id as fallback
-                    node_key = f"{correct_type.lower()}:{node.id}"
-                
-                # Check if we've already seen this node (by key)
-                if node_key in existing_nodes_by_type:
-                    # Skip this node - we'll use the first one with this key
-                    continue
-                
-                # Update the node type to the correct casing
-                node.type = correct_type
-                
-                # Track this node by its key
-                existing_nodes_by_type[node_key] = node
-                normalized_nodes.append(node)
-            else:
-                # Node type is not in allowed types, skip it
-                print(f"Warning: Node type '{node.type}' not in allowed types. Skipping.")
-    
-    # Replace nodes list with our normalized, deduplicated list
-    graph_doc.nodes = normalized_nodes
-    
-    # Now continue with the rest of the processing...
+            normalized = node.type.lower()
+            if normalized in ALLOWED_NODE_TYPES:
+                canonical_type = ALLOWED_NODE_TYPES[normalized]
+                node.type = canonical_type
+                # Normalize the node.id to replace incorrect type casing
+                if node.id and node.id.lower().startswith(normalized):
+                    node.id = node.id.replace(node.id[:len(canonical_type)], canonical_type)
     
     # Ensure nodes have required properties
     for node in graph_doc.nodes:
