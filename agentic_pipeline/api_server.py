@@ -12,7 +12,9 @@ JSON_DIR = "llm_knowledge_graph/data/course/json-outputs"
 
 NORMALIZATION_RULES = {
     "hip / groin": ["Hip Left", "Hip Right", "Groin"],
-    "chest / ribs / upper back": ["Chest", "Upper Back"]
+    "chest / ribs / upper back": ["Chest", "Upper Back"],
+    "abdomen": ["Abdomen"],
+    "wrist":["Left Wrist"]
 }
 
 @app.route("/")
