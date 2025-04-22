@@ -190,11 +190,13 @@ async function loadData(date) {
         const cacheKey = `injuryStory_${date}_${label}`;
         const cachedStory = sessionStorage.getItem(cacheKey);
         if (cachedStory) {
+          console.log(`Cache hit for ${cacheKey}`);
           document.getElementById('injury-details').innerHTML = `
             <h3>${label} - Injury Story (${date})</h3>
             <p style="white-space: pre-wrap;">${cachedStory}</p>
           `;
         } else {
+          console.log(`Cache miss for ${cacheKey}, fetching from API`);
           document.getElementById('injury-details').innerHTML = `<p>Loading injury story for ${label}...</p>`;
           try {
             const res = await fetch(`/api/injury-story?t=${date}`);
@@ -202,6 +204,7 @@ async function loadData(date) {
             if (data.story) {
               try {
                 sessionStorage.setItem(cacheKey, data.story);
+                console.log(`Stored story in sessionStorage for ${cacheKey}`);
               } catch (e) {
                 console.error('Failed to store in sessionStorage:', e);
               }
