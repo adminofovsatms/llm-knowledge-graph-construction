@@ -102,31 +102,28 @@ function translateTimeline(timelineComponents, value, totWidth) {
 function updateFilling(selectedEvent, filling, totWidth) {
   const eventStyle = window.getComputedStyle(selectedEvent);
   const eventLeft = parseFloat(eventStyle.getPropertyValue("left"));
-  const nodeWidth = 30;
-  // Scale to right edge of node (eventLeft + nodeWidth)
-  const scaleValue = (eventLeft + nodeWidth) / totWidth;
+  const scaleValue = eventLeft / totWidth; // Scale to left edge of node
   setTransformValue(filling, 'scaleX', scaleValue);
 }
 
 function setDatePosition(timelineComponents) {
   const totalEvents = timelineComponents['timelineEvents'].length;
-  const nodeWidth = 30;
-  const spacing = 40; // Fixed spacing between nodes
+  const containerWidth = parseFloat(window.getComputedStyle(timelineComponents['timelineWrapper']).width);
+  const nodeWidth = 30; // Fixed node width from CSS
+  const totalNodesWidth = totalEvents * nodeWidth;
+  const totalSpacing = containerWidth - totalNodesWidth;
+  const spacing = totalSpacing / (totalEvents + 1); // Equal spacing before, between, and after
 
   for (let i = 0; i < totalEvents; i++) {
-    // Position nodes with equal spacing
-    const position = spacing + i * (nodeWidth + spacing);
+    const position = spacing * (i + 1) + nodeWidth * i;
     timelineComponents['timelineEvents'][i].style.left = position + 'px';
   }
 }
 
 function setTimelineWidth(timelineComponents) {
   const totalEvents = timelineComponents['timelineEvents'].length;
-  const nodeWidth = 30;
-  const spacing = 40;
-  // Calculate total width needed for all nodes and spacing
-  const totalWidth = spacing + totalEvents * (nodeWidth + spacing);
-  
+  const containerWidth = parseFloat(window.getComputedStyle(timelineComponents['timelineWrapper']).width);
+  const totalWidth = containerWidth; // Match container width
   timelineComponents['eventsWrapper'].style.width = totalWidth + 'px';
   updateFilling(timelineComponents['timelineEvents'][0], timelineComponents['fillingLine'], totalWidth);
   return totalWidth;
