@@ -187,21 +187,35 @@ async function loadData(date) {
       const label = node.data('label');
       const color = node.data('color');
       if (color === "red" && date) {
-        document.getElementById('injury-details').innerHTML = `<p>Loading injury story for ${label}...</p>`;
-        try {
-          const res = await fetch(`/api/injury-story?t=${date}`);
-          const data = await res.json();
-          if (data.story) {
-            document.getElementById('injury-details').innerHTML = `
-              <h3>${label} - Injury Story (${date})</h3>
-              <p style="white-space: pre-wrap;">${data.story}</p>
-            `;
-          } else {
-            document.getElementById('injury-details').innerText = `No story found for ${label}.`;
+        const cacheKey = `injuryStory_${date}_${label}`;
+        const cachedStory = sessionStorage.getItem(cacheKey);
+        if (cachedStory) {
+          document.getElementById('injury-details').innerHTML = `
+            <h3>${label} - Injury Story (${date})</h3>
+            <p style="white-space: pre-wrap;">${cachedStory}</p>
+          `;
+        } else {
+          document.getElementById('injury-details').innerHTML = `<p>Loading injury story for ${label}...</p>`;
+          try {
+            const res = await fetch(`/api/injury-story?t=${date}`);
+            const data = await res.json();
+            if (data.story) {
+              try {
+                sessionStorage.setItem(cacheKey, data.story);
+              } catch (e) {
+                console.error('Failed to store in sessionStorage:', e);
+              }
+              document.getElementById('injury-details').innerHTML = `
+                <h3>${label} - Injury Story (${date})</h3>
+                <p style="white-space: pre-wrap;">${data.story}</p>
+              `;
+            } else {
+              document.getElementById('injury-details').innerText = `No story found for ${label}.`;
+            }
+          } catch (err) {
+            console.error("Error loading story:", err);
+            document.getElementById('injury-details').innerText = "Failed to load injury story.";
           }
-        } catch (err) {
-          console.error("Error loading story:", err);
-          document.getElementById('injury-details').innerText = "Failed to load injury story.";
         }
       } else {
         const injury = node.data('injury');
