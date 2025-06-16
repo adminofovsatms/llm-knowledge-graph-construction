@@ -4,21 +4,44 @@ This repository accompanies the link:https://graphacademy.neo4j.com/courses/llm-
 
 For a complete walkthrough of this repository, link:https://graphacademy.neo4j.com/courses/llm-knowledge-graph-construction[enrol now^].
 
-== Tests
+Update the .env file with your neo4j instance details and open AI API key.
 
-To run the solution tests: 
+After this, run the below commands. Install python and go into your venv as necessary.
 
-. Create blank Neo4j instance
-. Create a virtual environment and install the requirements.
-+ 
-[source,sh]
-pip install -r requirements.txt
-. Install `pytest`
-+
-[source,sh]
-pip install pytest
-. Create a `.env` file in the root directory. Use `.env.example` as a template.
-. Run the tests
-+
-[source,sh]
-pytest llm-knowledge-graph/solutions
+Run this python file to generate the json output which will be used for further processing. 
+pdfToJson.py
+
+Flow of execution :
+
+PDFs are given as input, extracted using Pdf plumber library. (no LLM invovled here) : pdfToJson.py
+Extracted data is in the form on Json. 
+
+Run following commands in order :
+ 
+python -m agentic_pipeline.scaffold_builder
+python -m agentic_pipeline.master_orchestrator
+python -m agentic_pipeline.api_server
+
+Once done, open the http://127.0.0.1:5000 to see the stick figure.
+
+The neo4j instance has to be kept running, when you render the front end.
+
+
+scaffold_builder.py 
+Builds skeleton of the stick figure in neo 4j. 
+python -m agentic_pipeline.scaffold_builder
+
+
+To view the nodes in Neo4j.
+MATCH (n)
+OPTIONAL MATCH (n)-[r]->(m)
+RETURN n, r, m
+LIMIT 300
+ 
+python -m agentic_pipeline.master_orchestrator
+Extracts data from json file, feeds to llm to derive correct mapping between data(injury on specific body parts) and the stick figure.
+
+python -m agentic_pipeline.api_server
+Showing the stick figure
+Highlighing of the nodes
+get a summary of particular node(LLM)
