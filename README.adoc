@@ -45,3 +45,11 @@ python -m agentic_pipeline.api_server
 Showing the stick figure
 Highlighing of the nodes
 get a summary of particular node(LLM)
+
+After importing the shared code base in VS code editor, run the following command to create a new git project which you can commmit to your git repository.
+
+Create a .env file with the following properties in in
+OPENAI_API_KEY=
+NEO4J_URI=neo4j+s://9fd31ad0.databases.neo4j.io:7687(replace with your own NEO4j URI)
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=
