@@ -31,6 +31,10 @@ def home():
     endpoints = {
         "message": "Business Management API",
         "available_endpoints": {
+            "Vendor Operations": {
+                "/api/vendors": "GET - List all vendors",
+                "/api/vendors/<id>": "GET - Get vendor details",
+            },
             "Create Operations": {
                 "/api/create/bill": "POST - Create bill",
                 "/api/create/bill-company": "POST - Create bill by company",
@@ -53,9 +57,82 @@ def home():
                 "/api/modify/bill": "PUT - Modify bill",
                 "/api/modify/vendor": "PUT - Modify vendor"
             }
+        },
+        "example_usage": {
+            "get_vendors": {
+                "url": "/api/vendors",
+                "method": "GET",
+                "description": "Get list of all vendors to find vendor_id for bill creation"
+            },
+            "create_bill_simple": {
+                "url": "/api/create/bill",
+                "method": "POST",
+                "body": {
+                    "vendor_id": 123,
+                    "description": "Office supplies",
+                    "amount": 1500.50,
+                    "invoice_date": "2025-01-15",
+                    "vendor_ref": "INV-001"
+                },
+                "description": "Create a simple bill with one line item"
+            },
+            "create_bill_multiple_items": {
+                "url": "/api/create/bill",
+                "method": "POST", 
+                "body": {
+                    "vendor_id": 123,
+                    "invoice_date": "2025-01-15",
+                    "vendor_ref": "INV-001",
+                    "line_items": [
+                        {
+                            "description": "Office supplies",
+                            "quantity": 2,
+                            "price_unit": 750.25
+                        },
+                        {
+                            "description": "Software license", 
+                            "quantity": 1,
+                            "price_unit": 500.00
+                        }
+                    ]
+                },
+                "description": "Create a bill with multiple line items"
+            }
+        },
+        "required_fields": {
+            "create_bill": {
+                "vendor_id": "integer (required) - Get from /api/vendors",
+                "description + amount": "string + number (option 1) - For single line item",
+                "line_items": "array (option 2) - For multiple line items",
+                "invoice_date": "string (optional) - Format: YYYY-MM-DD, defaults to today",
+                "vendor_ref": "string (optional) - Vendor reference number"
+            }
         }
     }
     return jsonify(endpoints)
+
+# Vendor Operations
+@app.route('/api/vendors', methods=['GET'])
+def get_vendors():
+    """Get list of all vendors"""
+    try:
+        result = createbill.list_vendors()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/vendors/<int:vendor_id>', methods=['GET'])
+def get_vendor(vendor_id):
+    """Get specific vendor details"""
+    try:
+        # You can implement this in createbill.py if needed
+        return jsonify({
+            'success': True, 
+            'vendor_id': vendor_id, 
+            'message': 'Vendor details endpoint - implementation pending'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Create Operations
 @app.route('/api/create/bill', methods=['POST'])
@@ -209,6 +286,21 @@ def modify_vendor():
 def health():
     return jsonify({'status': 'healthy', 'message': 'Business Management API is running'})
 
+# Test endpoint to verify environment variables
+@app.route('/api/test-config')
+def test_config():
+    """Test endpoint to verify configuration (for debugging)"""
+    config_status = {
+        'odoo_username': bool(os.getenv("ODOO_USERNAME")),
+        'odoo_api_key': bool(os.getenv("ODOO_API_KEY")),
+        'environment_vars': list(os.environ.keys())
+    }
+    return jsonify({
+        'success': True,
+        'config': config_status,
+        'message': 'Configuration check complete'
+    })
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
@@ -217,6 +309,10 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({'success': False, 'error': 'Bad request - check your JSON format'}), 400
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
