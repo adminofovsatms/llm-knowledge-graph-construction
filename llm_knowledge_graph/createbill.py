@@ -5,14 +5,57 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def create_vendor_bill_simple():
-    """Simplified vendor bill creation - avoids complex account lookups"""
+def main(data):
+    """
+    Create vendor bill from HTTP request data
+    
+    Expected data format:
+    {
+        "vendor_id": 123,
+        "invoice_date": "2025-01-15",  # optional, defaults to today
+        "vendor_ref": "INV-001",       # optional
+        "description": "Office supplies",
+        "amount": 1500.50
+    }
+    
+    Or with multiple line items:
+    {
+        "vendor_id": 123,
+        "invoice_date": "2025-01-15",
+        "vendor_ref": "INV-001",
+        "line_items": [
+            {
+                "description": "Office supplies",
+                "quantity": 2,
+                "price_unit": 750.25
+            },
+            {
+                "description": "Software license",
+                "quantity": 1,
+                "price_unit": 500.00
+            }
+        ]
+    }
+    """
+    
+    # Validate required fields
+    if not data.get('vendor_id'):
+        return {
+            'success': False,
+            'error': 'vendor_id is required'
+        }
     
     # Odoo connection details
     url = 'https://omnithrive-technologies1.odoo.com'
     db = 'omnithrive-technologies1'
     username = os.getenv("ODOO_USERNAME")
     password = os.getenv("ODOO_API_KEY")
+    
+    if not username or not password:
+        return {
+            'success': False,
+            'error': 'ODOO_USERNAME and ODOO_API_KEY environment variables are required'
+        }
     
     try:
         # Connect to Odoo
@@ -22,131 +65,165 @@ def create_vendor_bill_simple():
         # Authenticate
         uid = common.authenticate(db, username, password, {})
         if not uid:
-            print("❌ Authentication failed!")
-            return
+            return {
+                'success': False,
+                'error': 'Odoo authentication failed'
+            }
         
-        print("✅ Connected to Odoo successfully!")
-        
-        # Step 1: Get vendor
-        print("\n👥 Select Vendor:")
-        
-        vendors = models.execute_kw(
+        # Verify vendor exists
+        vendor_id = data['vendor_id']
+        vendor_exists = models.execute_kw(
             db, uid, password,
-            'res.partner', 'search_read',
-            [[('supplier_rank', '>', 0)]], 
-            {'fields': ['id', 'name'], 'limit': 10}
+            'res.partner', 'search_count',
+            [[('id', '=', vendor_id), ('supplier_rank', '>', 0)]]
         )
         
-        if not vendors:
-            print("❌ No vendors found! Please create a vendor first.")
-            return
+        if not vendor_exists:
+            return {
+                'success': False,
+                'error': f'Vendor with ID {vendor_id} not found or is not a supplier'
+            }
         
-        print("Available vendors:")
-        for vendor in vendors:
-            print(f"   {vendor['id']}: {vendor['name']}")
+        # Get vendor name for response
+        vendor_info = models.execute_kw(
+            db, uid, password,
+            'res.partner', 'read',
+            [[vendor_id]], 
+            {'fields': ['name']}
+        )[0]
         
-        vendor_id = input("\nEnter vendor ID: ").strip()
+        # Prepare bill data
+        invoice_date = data.get('invoice_date', datetime.now().strftime('%Y-%m-%d'))
+        
+        # Validate date format
         try:
-            vendor_id = int(vendor_id)
-            vendor_name = next(v['name'] for v in vendors if v['id'] == vendor_id)
-            print(f"✅ Selected: {vendor_name}")
-        except (ValueError, StopIteration):
-            print("❌ Invalid vendor ID!")
-            return
-        
-        # Step 2: Bill details
-        print(f"\n📄 Bill Details:")
-        
-        invoice_date = input("Invoice date (YYYY-MM-DD) or Enter for today: ").strip()
-        if not invoice_date:
-            invoice_date = datetime.now().strftime('%Y-%m-%d')
-        
-        vendor_ref = input("Vendor reference (optional): ").strip()
-        
-        # Step 3: Simple line item
-        print(f"\n💰 Bill Amount:")
-        
-        description = input("Description: ").strip()
-        if not description:
-            description = "Vendor Bill"
-        
-        amount = input("Total amount: ").strip()
-        try:
-            amount = float(amount)
+            datetime.strptime(invoice_date, '%Y-%m-%d')
         except ValueError:
-            print("❌ Invalid amount!")
-            return
+            return {
+                'success': False,
+                'error': 'invoice_date must be in YYYY-MM-DD format'
+            }
         
-        # Step 4: Create bill with minimal data
-        print(f"\n📋 Summary:")
-        print(f"   Vendor: {vendor_name}")
-        print(f"   Date: {invoice_date}")
-        print(f"   Description: {description}")
-        print(f"   Amount: ${amount}")
-        if vendor_ref:
-            print(f"   Reference: {vendor_ref}")
-        
-        confirm = input("\nCreate bill? (y/n): ").lower().strip()
-        if confirm != 'y':
-            print("❌ Cancelled.")
-            return
-        
-        # Prepare minimal bill data (let Odoo handle account assignment)
         bill_data = {
             'move_type': 'in_invoice',
             'partner_id': vendor_id,
             'invoice_date': invoice_date,
-            'invoice_line_ids': [(0, 0, {
-                'name': description,
-                'quantity': 1.0,
-                'price_unit': amount,
-                # Don't specify account_id - let Odoo auto-assign
-            })]
         }
         
-        if vendor_ref:
-            bill_data['ref'] = vendor_ref
+        # Add vendor reference if provided
+        if data.get('vendor_ref'):
+            bill_data['ref'] = data['vendor_ref']
         
-        print(f"\n🔄 Creating bill...")
+        # Handle line items
+        invoice_line_ids = []
         
+        if 'line_items' in data and data['line_items']:
+            # Multiple line items
+            for item in data['line_items']:
+                if not item.get('description'):
+                    return {
+                        'success': False,
+                        'error': 'Each line item must have a description'
+                    }
+                
+                try:
+                    quantity = float(item.get('quantity', 1.0))
+                    price_unit = float(item.get('price_unit', 0.0))
+                except (ValueError, TypeError):
+                    return {
+                        'success': False,
+                        'error': 'quantity and price_unit must be valid numbers'
+                    }
+                
+                line_item = {
+                    'name': item['description'],
+                    'quantity': quantity,
+                    'price_unit': price_unit,
+                }
+                
+                invoice_line_ids.append((0, 0, line_item))
+        
+        elif data.get('description') and data.get('amount'):
+            # Single line item (backward compatibility)
+            try:
+                amount = float(data['amount'])
+            except (ValueError, TypeError):
+                return {
+                    'success': False,
+                    'error': 'amount must be a valid number'
+                }
+            
+            line_item = {
+                'name': data['description'],
+                'quantity': 1.0,
+                'price_unit': amount,
+            }
+            
+            invoice_line_ids.append((0, 0, line_item))
+        
+        else:
+            return {
+                'success': False,
+                'error': 'Either provide line_items array or description and amount'
+            }
+        
+        bill_data['invoice_line_ids'] = invoice_line_ids
+        
+        # Create the bill
         bill_id = models.execute_kw(
             db, uid, password,
             'account.move', 'create',
             [bill_data]
         )
         
-        if bill_id:
-            print(f"✅ Vendor bill created!")
-            print(f"   Bill ID: {bill_id}")
-            
-            # Get bill info
-            try:
-                bill_info = models.execute_kw(
-                    db, uid, password,
-                    'account.move', 'read',
-                    [[bill_id]], 
-                    {'fields': ['name', 'amount_total']}
-                )[0]
-                
-                print(f"   Bill Number: {bill_info.get('name', 'N/A')}")
-                print(f"   Total: ${bill_info.get('amount_total', amount)}")
-                
-            except Exception as e:
-                print(f"   (Could not fetch bill details: {e})")
-                
-        else:
-            print(f"❌ Failed to create bill")
-            
+        if not bill_id:
+            return {
+                'success': False,
+                'error': 'Failed to create bill in Odoo'
+            }
+        
+        # Get created bill information
+        bill_info = models.execute_kw(
+            db, uid, password,
+            'account.move', 'read',
+            [[bill_id]], 
+            {'fields': ['name', 'amount_total', 'state']}
+        )[0]
+        
+        return {
+            'success': True,
+            'bill_id': bill_id,
+            'bill_number': bill_info.get('name'),
+            'vendor_name': vendor_info['name'],
+            'total_amount': bill_info.get('amount_total'),
+            'state': bill_info.get('state'),
+            'invoice_date': invoice_date,
+            'message': 'Vendor bill created successfully'
+        }
+        
+    except xmlrpc.client.Fault as e:
+        return {
+            'success': False,
+            'error': f'Odoo API error: {str(e)}'
+        }
     except Exception as e:
-        print(f"❌ Error: {e}")
+        return {
+            'success': False,
+            'error': f'Unexpected error: {str(e)}'
+        }
 
+def create(data):
+    """Alias for main function to maintain compatibility"""
+    return main(data)
+
+# Helper function to list vendors (for reference)
 def list_vendors():
-    """Helper function to list vendors"""
+    """Get list of vendors for reference"""
     
     url = 'https://omnithrive-technologies1.odoo.com'
     db = 'omnithrive-technologies1'
-    username = 'admin@omnithrivetech.com'
-    password = '08d538a8d48fa4ad9d9fb0bbea9edb6d155a66fc'
+    username = os.getenv("ODOO_USERNAME")
+    password = os.getenv("ODOO_API_KEY")
     
     try:
         common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
@@ -154,8 +231,7 @@ def list_vendors():
         
         uid = common.authenticate(db, username, password, {})
         if not uid:
-            print("❌ Authentication failed!")
-            return
+            return {'success': False, 'error': 'Authentication failed'}
         
         vendors = models.execute_kw(
             db, uid, password,
@@ -164,29 +240,14 @@ def list_vendors():
             {'fields': ['id', 'name', 'email']}
         )
         
-        print(f"\n📋 Available Vendors ({len(vendors)} found):")
-        print("=" * 40)
+        return {
+            'success': True,
+            'vendors': vendors,
+            'count': len(vendors)
+        }
         
-        for vendor in vendors:
-            email = f" - {vendor['email']}" if vendor.get('email') else ""
-            print(f"ID: {vendor['id']} | {vendor['name']}{email}")
-            
     except Exception as e:
-        print(f"❌ Error: {e}")
-
-if __name__ == "__main__":
-    print("📄 Simple Vendor Bill Creator")
-    print("=" * 30)
-    
-    print("\nWhat would you like to do?")
-    print("1. Create vendor bill")
-    print("2. List vendors")
-    
-    choice = input("\nChoice (1/2): ").strip()
-    
-    if choice == "1":
-        create_vendor_bill_simple()
-    elif choice == "2":
-        list_vendors()
-    else:
-        print("❌ Invalid choice")
+        return {
+            'success': False,
+            'error': str(e)
+        }
