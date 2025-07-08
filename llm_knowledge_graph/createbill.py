@@ -1,5 +1,9 @@
 import xmlrpc.client
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_vendor_bill_simple():
     """Simplified vendor bill creation - avoids complex account lookups"""
@@ -7,8 +11,8 @@ def create_vendor_bill_simple():
     # Odoo connection details
     url = 'https://omnithrive-technologies1.odoo.com'
     db = 'omnithrive-technologies1'
-    username = 'admin@omnithrivetech.com'
-    password = '08d538a8d48fa4ad9d9fb0bbea9edb6d155a66fc'
+    username = os.getenv("ODOO_USERNAME")
+    password = os.getenv("ODOO_API_KEY")
     
     try:
         # Connect to Odoo

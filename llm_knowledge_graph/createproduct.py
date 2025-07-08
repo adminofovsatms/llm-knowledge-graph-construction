@@ -1,11 +1,15 @@
 import xmlrpc.client
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def connect_odoo():
     """Connect to Odoo"""
     url = 'https://omnithrive-technologies1.odoo.com'
     db = 'omnithrive-technologies1'
-    username = 'admin@omnithrivetech.com'
-    password = '08d538a8d48fa4ad9d9fb0bbea9edb6d155a66fc'
+    username = os.getenv("ODOO_USERNAME")
+    password = os.getenv("ODOO_API_KEY")
     
     try:
         common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')

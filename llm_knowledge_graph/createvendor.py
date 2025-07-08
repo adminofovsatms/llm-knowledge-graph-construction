@@ -1,6 +1,10 @@
 import xmlrpc.client
 import logging
 from typing import Dict, Optional, Union
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class OdooVendorManager:
     def __init__(self, url: str, db: str, username: str, password: str):
@@ -10,8 +14,8 @@ class OdooVendorManager:
         Args:
             url: Odoo server URL (e.g., 'https://omnithrive-technologies1.odoo.com')
             db: omnithrive-technologies1
-            username: admin@omnithrivetech.com
-            password: 08d538a8d48fa4ad9d9fb0bbea9edb6d155a66fc
+            username = os.getenv("ODOO_USERNAME")
+            password = os.getenv("ODOO_API_KEY")
         """
         self.url = url
         self.db = db
@@ -318,8 +322,8 @@ if __name__ == "__main__":
     odoo_vendor = OdooVendorManager(
         url='https://omnithrive-technologies1.odoo.com',
         db='omnithrive-technologies1',
-        username='admin@omnithrivetech.com',
-        password='08d538a8d48fa4ad9d9fb0bbea9edb6d155a66fc'
+        username = os.getenv("ODOO_USERNAME"),
+        password = os.getenv("ODOO_API_KEY")
     )
     
     # Example 1: Create basic vendor
